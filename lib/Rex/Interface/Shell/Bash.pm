@@ -44,8 +44,7 @@ sub set_env {
     my $cmd = undef;
 
     while (my ($k, $v) = each ( $env )) {
-        $cmd .= "$k=$v; export $k; ";
-        $self->{env_raw} .= "$k $v";
+        $cmd .= "export $k=$v; ";
     }
     $self->{env} = $cmd;
 }
