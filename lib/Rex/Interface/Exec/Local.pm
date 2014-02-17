@@ -28,10 +28,22 @@ sub new {
 sub set_env {
     my ($self, $env) = @_;
     my $cmd = undef;
-
-    while (my ($k, $v) = each ( $env )) {
-        $cmd .= "export $k=$v; ";
+    
+    if(ref($env) eq 'HASH')
+    {
+        while (my ($k, $v) = each ( $env )) {
+            $cmd .= "export $k=$v; ";
+        }
     }
+    elsif(ref($env) eq 'SCALAR')
+    {
+        $cmd = $env;
+    }
+    else
+    {
+        die "The passed env should either be a hash or a scalar.";
+    }
+    
     $self->{env} = $cmd;
 }
 
@@ -68,7 +80,7 @@ sub exec {
          $new_cmd = "export $path ; $new_cmd";
       }
 
-      if($self->{env}) {
+      if(exists $self->{env} && ref($self->{env}) eq 'SCALAR' ) {
          $new_cmd = $self->{env} . " $new_cmd";
       }
 
