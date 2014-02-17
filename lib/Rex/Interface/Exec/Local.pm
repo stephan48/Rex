@@ -25,6 +25,16 @@ sub new {
    return $self;
 }
 
+sub set_env {
+    my ($self, $env) = @_;
+    my $cmd = undef;
+
+    while (my ($k, $v) = each ( $env )) {
+        $cmd .= "$k=$v; export $k; ";
+    }
+    $self->{env} = $cmd;
+}
+
 sub exec {
    my ($self, $cmd, $path, $option) = @_;
 
@@ -38,13 +48,15 @@ sub exec {
    if(exists $option->{path}) {
       $path = $option->{path};
    }
+   
+   if(exists $option->{env}) {
+      $self->set_env($option->{env});   
+   }
 
    if(exists $option->{format_cmd}) {
       $option->{format_cmd} =~ s/{{CMD}}/$cmd/;
       $cmd = $option->{format_cmd};
    }
-
-   Rex::Logger::debug("Executing: $cmd");
 
    Rex::Commands::profiler()->start("exec: $cmd");
    if($^O !~ m/^MSWin/) {
@@ -56,12 +68,18 @@ sub exec {
          $new_cmd = "export $path ; $new_cmd";
       }
 
+      if($self->{env}) {
+         $new_cmd = $self->{env} . " $new_cmd";
+      }
+
       if(Rex::Config->get_source_global_profile) {
          $new_cmd = ". /etc/profile >/dev/null 2>&1; $new_cmd";
       }
 
       $cmd = $new_cmd;
    }
+
+   Rex::Logger::debug("Executing: $cmd");
 
    my($writer, $reader, $error);
    $error = gensym;
